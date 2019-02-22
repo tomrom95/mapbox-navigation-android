@@ -1,4 +1,4 @@
-package com.mapbox.services.android.navigation.v5.location;
+package com.mapbox.services.android.navigation.v5.internal.location;
 
 import android.location.Location;
 

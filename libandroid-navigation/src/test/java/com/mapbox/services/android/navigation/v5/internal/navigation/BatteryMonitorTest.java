@@ -1,10 +1,13 @@
-package com.mapbox.services.android.navigation.v5.navigation;
+package com.mapbox.services.android.navigation.v5.internal.navigation;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.BatteryManager;
+
+import com.mapbox.services.android.navigation.v5.internal.navigation.BatteryMonitor;
+import com.mapbox.services.android.navigation.v5.internal.navigation.SdkVersionChecker;
 
 import org.junit.Test;
 

@@ -1,4 +1,4 @@
-package com.mapbox.services.android.navigation.v5.navigation;
+package com.mapbox.services.android.navigation.v5.internal.navigation;
 
 import android.support.annotation.NonNull;
 
@@ -8,13 +8,13 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-class NavigationRouteCallback implements Callback<DirectionsResponse> {
+public class NavigationRouteCallback implements Callback<DirectionsResponse> {
 
   private final NavigationTelemetry telemetry;
   private final NavigationRouteEventListener listener;
   private final Callback<DirectionsResponse> callback;
 
-  NavigationRouteCallback(NavigationRouteEventListener listener, Callback<DirectionsResponse> callback) {
+  public NavigationRouteCallback(NavigationRouteEventListener listener, Callback<DirectionsResponse> callback) {
     this(NavigationTelemetry.getInstance(), listener, callback);
   }
 

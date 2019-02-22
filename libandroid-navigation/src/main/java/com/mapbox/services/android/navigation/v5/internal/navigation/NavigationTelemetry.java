@@ -1,4 +1,4 @@
-package com.mapbox.services.android.navigation.v5.navigation;
+package com.mapbox.services.android.navigation.v5.internal.navigation;
 
 import android.app.Application;
 import android.content.Context;
@@ -14,8 +14,11 @@ import com.mapbox.core.utils.TextUtils;
 import com.mapbox.geojson.Point;
 import com.mapbox.geojson.utils.PolylineUtils;
 import com.mapbox.services.android.navigation.BuildConfig;
-import com.mapbox.services.android.navigation.v5.exception.NavigationException;
-import com.mapbox.services.android.navigation.v5.location.MetricsLocation;
+import com.mapbox.services.android.navigation.v5.internal.exception.NavigationException;
+import com.mapbox.services.android.navigation.v5.internal.location.MetricsLocation;
+import com.mapbox.services.android.navigation.v5.navigation.MapboxNavigation;
+import com.mapbox.services.android.navigation.v5.navigation.MapboxNavigationOptions;
+import com.mapbox.services.android.navigation.v5.navigation.NavigationService;
 import com.mapbox.services.android.navigation.v5.navigation.metrics.FeedbackEvent;
 import com.mapbox.services.android.navigation.v5.navigation.metrics.NavigationMetricListener;
 import com.mapbox.services.android.navigation.v5.navigation.metrics.RerouteEvent;
@@ -35,7 +38,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
-class NavigationTelemetry implements NavigationMetricListener {
+public class NavigationTelemetry implements NavigationMetricListener {
 
   private Context context;
   private static NavigationTelemetry instance;
@@ -121,7 +124,7 @@ class NavigationTelemetry implements NavigationMetricListener {
     NavigationMetricsWrapper.arriveEvent(navigationSessionState, routeProgress, metricLocation.getLocation(), context);
   }
 
-  void initialize(@NonNull Context context, @NonNull String accessToken,
+  public void initialize(@NonNull Context context, @NonNull String accessToken,
                   MapboxNavigation navigation, LocationEngine locationEngine) {
     if (!isInitialized) {
       updateLocationEngineName(locationEngine);
@@ -150,7 +153,7 @@ class NavigationTelemetry implements NavigationMetricListener {
    *
    * @param application to register the callbacks
    */
-  void initializeLifecycleMonitor(Application application) {
+  public void initializeLifecycleMonitor(Application application) {
     if (lifecycleMonitor == null) {
       lifecycleMonitor = new NavigationLifecycleMonitor(application);
     }
@@ -162,7 +165,7 @@ class NavigationTelemetry implements NavigationMetricListener {
    *
    * @param directionsRoute first route passed to navigation
    */
-  void startSession(DirectionsRoute directionsRoute) {
+  public void startSession(DirectionsRoute directionsRoute) {
     if (!isConfigurationChange) {
       navigationSessionState = navigationSessionState.toBuilder()
         .sessionIdentifier(TelemetryUtils.obtainUniversalUniqueIdentifier())
@@ -218,7 +221,7 @@ class NavigationTelemetry implements NavigationMetricListener {
    *
    * @param directionsRoute new route passed to {@link MapboxNavigation}
    */
-  void updateSessionRoute(DirectionsRoute directionsRoute) {
+  public void updateSessionRoute(DirectionsRoute directionsRoute) {
     SessionState.Builder navigationBuilder = navigationSessionState.toBuilder()
       .tripIdentifier(TelemetryUtils.obtainUniversalUniqueIdentifier());
     navigationBuilder.currentDirectionRoute(directionsRoute);
@@ -244,14 +247,14 @@ class NavigationTelemetry implements NavigationMetricListener {
    * Called during {@link NavigationTelemetry#initialize(Context, String, MapboxNavigation, LocationEngine)}
    * and any time {@link MapboxNavigation} gets an updated location engine.
    */
-  void updateLocationEngineName(LocationEngine locationEngine) {
+  public void updateLocationEngineName(LocationEngine locationEngine) {
     if (locationEngine != null) {
       String locationEngineName = locationEngine.getClass().getName();
       navigationSessionState = navigationSessionState.toBuilder().locationEngineName(locationEngineName).build();
     }
   }
 
-  void updateLocation(Location location) {
+  public void updateLocation(Location location) {
     metricLocation = new MetricsLocation(location);
     locationBuffer.addLast(location);
     checkRerouteQueue();
@@ -267,7 +270,7 @@ class NavigationTelemetry implements NavigationMetricListener {
    * @param feedbackSource from either reroute or UI
    * @return String feedbackId to identify the event created if needed
    */
-  String recordFeedbackEvent(@FeedbackEvent.FeedbackType String feedbackType, String description,
+  public String recordFeedbackEvent(@FeedbackEvent.FeedbackType String feedbackType, String description,
                              @FeedbackEvent.FeedbackSource String feedbackSource) {
     FeedbackEvent feedbackEvent = queueFeedbackEvent(feedbackType, description, feedbackSource);
     return feedbackEvent.getEventId();
@@ -283,7 +286,7 @@ class NavigationTelemetry implements NavigationMetricListener {
    * @param description  an optional description to provide more detail about the feedback
    * @param screenshot   an optional encoded screenshot to provide more detail about the feedback
    */
-  void updateFeedbackEvent(String feedbackId, @FeedbackEvent.FeedbackType String feedbackType,
+  public void updateFeedbackEvent(String feedbackId, @FeedbackEvent.FeedbackType String feedbackType,
                            String description, String screenshot) {
     // Find the event and update
     FeedbackEvent feedbackEvent = (FeedbackEvent) findQueuedTelemetryEvent(feedbackId);
@@ -301,7 +304,7 @@ class NavigationTelemetry implements NavigationMetricListener {
    *
    * @param feedbackId generated from {@link MapboxNavigation#recordFeedback(String, String, String)}
    */
-  void cancelFeedback(String feedbackId) {
+  public void cancelFeedback(String feedbackId) {
     // Find the event and remove it from the queue
     FeedbackEvent feedbackEvent = (FeedbackEvent) findQueuedTelemetryEvent(feedbackId);
     queuedFeedbackEvents.remove(feedbackEvent);
