@@ -1,23 +1,25 @@
 package com.mapbox.services.android.navigation.ui.v5;
 
 import android.app.Activity;
-import android.arch.lifecycle.LifecycleObserver;
-import android.arch.lifecycle.LifecycleOwner;
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.res.Resources;
 import android.location.Location;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.BottomSheetBehavior;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ImageButton;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.view.ViewCompat;
+import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleRegistry;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.ViewModelProviders;
+
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.mapbox.api.directions.v5.models.DirectionsRoute;
 import com.mapbox.api.directions.v5.models.RouteOptions;
 import com.mapbox.geojson.Point;
@@ -65,7 +67,7 @@ import com.mapbox.services.android.navigation.v5.utils.LocaleUtils;
  *
  * @since 0.7.0
  */
-public class NavigationView extends CoordinatorLayout implements LifecycleObserver, OnMapReadyCallback,
+public class NavigationView extends CoordinatorLayout implements LifecycleOwner, OnMapReadyCallback,
   NavigationContract.View {
 
   private static final String MAP_INSTANCE_STATE_KEY = "navgation_mapbox_map_instance_state";
@@ -89,6 +91,7 @@ public class NavigationView extends CoordinatorLayout implements LifecycleObserv
   private CameraPosition initialMapCameraPosition;
   private boolean isMapInitialized;
   private boolean isSubscribed;
+  private LifecycleRegistry lifecycleRegistry;
 
   public NavigationView(Context context) {
     this(context, null);
@@ -112,6 +115,8 @@ public class NavigationView extends CoordinatorLayout implements LifecycleObserv
   public void onCreate(@Nullable Bundle savedInstanceState) {
     mapView.onCreate(savedInstanceState);
     updatePresenterState(savedInstanceState);
+    lifecycleRegistry = new LifecycleRegistry(this);
+    lifecycleRegistry.markState(Lifecycle.State.CREATED);
   }
 
   /**
@@ -177,11 +182,12 @@ public class NavigationView extends CoordinatorLayout implements LifecycleObserv
    * <p>
    * In an {@link Activity} this should be in {@link Activity#onDestroy()}.
    * <p>
-   * In a {@link android.support.v4.app.Fragment}, this should
-   * be in {@link android.support.v4.app.Fragment#onDestroyView()}.
+   * In a {@link androidx.fragment.app.Fragment}, this should
+   * be in {@link androidx.fragment.app.Fragment#onDestroyView()}.
    */
   public void onDestroy() {
     shutdown();
+    lifecycleRegistry.markState(Lifecycle.State.DESTROYED);
   }
 
   public void onStart() {
@@ -189,10 +195,12 @@ public class NavigationView extends CoordinatorLayout implements LifecycleObserv
     if (navigationMap != null) {
       navigationMap.onStart();
     }
+    lifecycleRegistry.markState(Lifecycle.State.STARTED);
   }
 
   public void onResume() {
     mapView.onResume();
+    lifecycleRegistry.markState(Lifecycle.State.RESUMED);
   }
 
   public void onPause() {
@@ -204,6 +212,12 @@ public class NavigationView extends CoordinatorLayout implements LifecycleObserv
     if (navigationMap != null) {
       navigationMap.onStop();
     }
+  }
+
+  @NonNull
+  @Override
+  public Lifecycle getLifecycle() {
+    return lifecycleRegistry;
   }
 
   /**
@@ -540,14 +554,14 @@ public class NavigationView extends CoordinatorLayout implements LifecycleObserv
   }
 
   private void initializeNavigationMap(MapView mapView, MapboxMap map) {
+    if (initialMapCameraPosition != null) {
+      map.setCameraPosition(initialMapCameraPosition);
+    }
     navigationMap = new NavigationMapboxMap(mapView, map);
     navigationMap.updateLocationLayerRenderMode(RenderMode.GPS);
     if (mapInstanceState != null) {
       navigationMap.restoreFrom(mapInstanceState);
       return;
-    }
-    if (initialMapCameraPosition != null) {
-      map.setCameraPosition(initialMapCameraPosition);
     }
   }
 
@@ -689,14 +703,13 @@ public class NavigationView extends CoordinatorLayout implements LifecycleObserv
    * Then, creates an instance of {@link NavigationViewSubscriber}, which takes a presenter.
    * <p>
    * The subscriber then subscribes to the view models, setting up the appropriate presenter / listener
-   * method calls based on the {@link android.arch.lifecycle.LiveData} updates.
+   * method calls based on the {@link androidx.lifecycle.LiveData} updates.
    */
   private void subscribeViewModels() {
-    instructionView.subscribe(navigationViewModel);
-    summaryBottomSheet.subscribe(navigationViewModel);
+    instructionView.subscribe(this, navigationViewModel);
+    summaryBottomSheet.subscribe(this, navigationViewModel);
 
-    NavigationViewSubscriber subscriber = new NavigationViewSubscriber(navigationPresenter);
-    subscriber.subscribe(((LifecycleOwner) getContext()), navigationViewModel);
+    new NavigationViewSubscriber(this, navigationViewModel, navigationPresenter).subscribe();
     isSubscribed = true;
   }
 

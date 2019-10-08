@@ -2,6 +2,34 @@
 
 Mapbox welcomes participation and contributions from everyone.
 
+### v0.43.0 -
+
+* Fix Javadoc Kotlin issues [#2103](https://github.com/mapbox/mapbox-navigation-android/pull/2103)
+* Fix intermittent memory issues in CI [#2096](https://github.com/mapbox/mapbox-navigation-android/pull/2096)
+
+### v0.42.0 - September 20, 2019
+
+Note: This release breaks `SEMVER` / contains API breaking changes. Please consult this [migration guide](https://github.com/mapbox/mapbox-navigation-android/wiki/0.42.0-Migration-Guide) for the necessary updates required.
+
+* Change driver feedback UI [#2054](https://github.com/mapbox/mapbox-navigation-android/pull/2054)
+* [SEMVER] Fix navigation view memory leak [#2051](https://github.com/mapbox/mapbox-navigation-android/pull/2051)
+* [SEMVER] Remove never used apis causing unnecessary memory issues [#2052](https://github.com/mapbox/mapbox-navigation-android/pull/2052)
+* [SEMVER] Fix backwards instructions in left-side driving scenarios [#2044](https://github.com/mapbox/mapbox-navigation-android/pull/2044)
+* Fix rerouting inside the NavigationUI [#2010](https://github.com/mapbox/mapbox-navigation-android/issues/2010)
+* Fix on route selection change listener being called if route is not visible [#2035](https://github.com/mapbox/mapbox-navigation-android/pull/2035)
+* [SEMVER] Fix NavigationStepData regression from #1890 [#2015](https://github.com/mapbox/mapbox-navigation-android/pull/2015)
+* Bump mapbox-android-sdk version to 8.2.1 [#2013](https://github.com/mapbox/mapbox-navigation-android/pull/2013)
+* Bump Mapbox Annotation Plugin version to v8 0.7.0 [#2014](https://github.com/mapbox/mapbox-navigation-android/pull/2014)
+* Auto generate license for the SDK [#2002](https://github.com/mapbox/mapbox-navigation-android/pull/2002)
+* Update translations to latest Transifex [#2003](https://github.com/mapbox/mapbox-navigation-android/pull/2003)
+
+### v0.41.0 - July 11, 2019
+
+* Fix navigation camera tracking the puck [#1995](https://github.com/mapbox/mapbox-navigation-android/pull/1995)
+* Move events from telemetry to nav sdk [#1890](https://github.com/mapbox/mapbox-navigation-android/pull/1890)
+* Fix DynamicCamera#CameraPosition.zoom NPE [#1979](https://github.com/mapbox/mapbox-navigation-android/pull/1979)
+* Update ComponentNavigationActivity example [#1978](https://github.com/mapbox/mapbox-navigation-android/pull/1978)
+
 ### v0.40.0 - June 12, 2019
 
 * Fix notification instruction not updated for arrive maneuver [#1959](https://github.com/mapbox/mapbox-navigation-android/pull/1959)

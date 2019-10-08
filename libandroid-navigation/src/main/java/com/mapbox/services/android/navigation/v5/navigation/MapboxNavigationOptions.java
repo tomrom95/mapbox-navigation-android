@@ -1,7 +1,7 @@
 package com.mapbox.services.android.navigation.v5.navigation;
 
-import android.support.annotation.ColorRes;
-import android.support.annotation.Nullable;
+import androidx.annotation.ColorRes;
+import androidx.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
 import com.mapbox.services.android.navigation.R;
@@ -121,7 +121,7 @@ public abstract class MapboxNavigationOptions {
       .isFromNavigationUi(false)
       .isDebugLoggingEnabled(false)
       .roundingIncrement(ROUNDING_INCREMENT_FIFTY)
-      .timeFormatType(NavigationTimeFormat.NONE_SPECIFIED)
+      .timeFormatType(NavigationTimeFormat.getNONE_SPECIFIED())
       .navigationLocationEngineIntervalLagInMilliseconds(NAVIGATION_LOCATION_ENGINE_INTERVAL_LAG)
       .defaultNotificationColorId(R.color.mapboxNotificationBlue);
   }

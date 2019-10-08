@@ -1,6 +1,6 @@
 package com.mapbox.services.android.navigation.ui.v5.route;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.mapbox.api.directions.v5.models.DirectionsRoute;
 import com.mapbox.geojson.Feature;
@@ -30,6 +30,9 @@ class MapRouteClickListener implements MapboxMap.OnMapClickListener {
 
   @Override
   public boolean onMapClick(@NonNull LatLng point) {
+    if (!isRouteVisible()) {
+      return false;
+    }
     HashMap<LineString, DirectionsRoute> routeLineStrings = routeLine.retrieveRouteLineStrings();
     if (invalidMapClick(routeLineStrings)) {
       return false;
@@ -49,6 +52,10 @@ class MapRouteClickListener implements MapboxMap.OnMapClickListener {
 
   private boolean invalidMapClick(HashMap<LineString, DirectionsRoute> routeLineStrings) {
     return routeLineStrings == null || routeLineStrings.isEmpty() || !alternativesVisible;
+  }
+
+  private boolean isRouteVisible() {
+    return routeLine.retrieveVisibility();
   }
 
   private void findClickedRoute(@NonNull LatLng point, HashMap<LineString, DirectionsRoute> routeLineStrings,

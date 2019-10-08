@@ -1,13 +1,14 @@
 package com.mapbox.services.android.navigation.ui.v5;
 
 import android.app.Application;
-import android.arch.lifecycle.AndroidViewModel;
-import android.arch.lifecycle.MutableLiveData;
 import android.content.Context;
 import android.location.Location;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.text.TextUtils;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.MutableLiveData;
 
 import com.mapbox.android.core.location.LocationEngine;
 import com.mapbox.api.directions.v5.models.BannerInstructions;
@@ -26,6 +27,7 @@ import com.mapbox.services.android.navigation.ui.v5.voice.SpeechAnnouncement;
 import com.mapbox.services.android.navigation.ui.v5.voice.SpeechPlayer;
 import com.mapbox.services.android.navigation.ui.v5.voice.SpeechPlayerProvider;
 import com.mapbox.services.android.navigation.ui.v5.voice.VoiceInstructionLoader;
+import com.mapbox.services.android.navigation.v5.internal.navigation.metrics.FeedbackEvent;
 import com.mapbox.services.android.navigation.v5.milestone.BannerInstructionMilestone;
 import com.mapbox.services.android.navigation.v5.milestone.Milestone;
 import com.mapbox.services.android.navigation.v5.milestone.MilestoneEventListener;
@@ -35,7 +37,6 @@ import com.mapbox.services.android.navigation.v5.navigation.MapboxNavigationOpti
 import com.mapbox.services.android.navigation.v5.navigation.NavigationEventListener;
 import com.mapbox.services.android.navigation.v5.navigation.NavigationTimeFormat;
 import com.mapbox.services.android.navigation.v5.navigation.camera.Camera;
-import com.mapbox.services.android.navigation.v5.navigation.metrics.FeedbackEvent;
 import com.mapbox.services.android.navigation.v5.offroute.OffRouteListener;
 import com.mapbox.services.android.navigation.v5.route.FasterRouteListener;
 import com.mapbox.services.android.navigation.v5.route.RouteFetcher;
@@ -43,6 +44,8 @@ import com.mapbox.services.android.navigation.v5.routeprogress.RouteProgress;
 import com.mapbox.services.android.navigation.v5.utils.DistanceFormatter;
 import com.mapbox.services.android.navigation.v5.utils.LocaleUtils;
 import com.mapbox.services.android.navigation.v5.utils.RouteUtils;
+
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.List;
@@ -59,9 +62,9 @@ public class NavigationViewModel extends AndroidViewModel {
   public final MutableLiveData<BannerInstructionModel> bannerInstructionModel = new MutableLiveData<>();
   public final MutableLiveData<SummaryModel> summaryModel = new MutableLiveData<>();
   public final MutableLiveData<Boolean> isOffRoute = new MutableLiveData<>();
-  final MutableLiveData<Location> navigationLocation = new MutableLiveData<>();
-  final MutableLiveData<DirectionsRoute> route = new MutableLiveData<>();
-  final MutableLiveData<Boolean> shouldRecordScreenshot = new MutableLiveData<>();
+  private final MutableLiveData<Location> navigationLocation = new MutableLiveData<>();
+  private final MutableLiveData<DirectionsRoute> route = new MutableLiveData<>();
+  private final MutableLiveData<Boolean> shouldRecordScreenshot = new MutableLiveData<>();
   private final MutableLiveData<Point> destination = new MutableLiveData<>();
 
   private MapboxNavigation navigation;
@@ -97,15 +100,19 @@ public class NavigationViewModel extends AndroidViewModel {
     this.connectivityController = new MapConnectivityController();
   }
 
+  @TestOnly
   // Package private (no modifier) for testing purposes
   NavigationViewModel(Application application, MapboxNavigation navigation,
-                      MapConnectivityController connectivityController, MapOfflineManager mapOfflineManager) {
+                      MapConnectivityController connectivityController, MapOfflineManager mapOfflineManager,
+                      NavigationViewRouter router) {
     super(application);
     this.navigation = navigation;
+    this.router = router;
     this.connectivityController = connectivityController;
     this.mapOfflineManager = mapOfflineManager;
   }
 
+  @TestOnly
   // Package private (no modifier) for testing purposes
   NavigationViewModel(Application application, MapboxNavigation navigation,
                       LocationEngineConductor conductor, NavigationViewEventDispatcher dispatcher,
@@ -118,10 +125,15 @@ public class NavigationViewModel extends AndroidViewModel {
     this.speechPlayer = speechPlayer;
   }
 
+  @Override
+  protected void onCleared() {
+    super.onCleared();
+    destroyRouter();
+  }
+
   public void onDestroy(boolean isChangingConfigurations) {
     this.isChangingConfigurations = isChangingConfigurations;
     if (!isChangingConfigurations) {
-      destroyRouter();
       endNavigation();
       destroyMapOffline();
       deactivateInstructionPlayer();
@@ -274,8 +286,20 @@ public class NavigationViewModel extends AndroidViewModel {
     }
   }
 
+  MutableLiveData<Location> retrieveNavigationLocation() {
+    return navigationLocation;
+  }
+
+  MutableLiveData<DirectionsRoute> retrieveRoute() {
+    return route;
+  }
+
   MutableLiveData<Point> retrieveDestination() {
     return destination;
+  }
+
+  MutableLiveData<Boolean> retrieveShouldRecordScreenshot() {
+    return shouldRecordScreenshot;
   }
 
   private void initializeRouter() {

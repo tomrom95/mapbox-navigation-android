@@ -8,15 +8,16 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.constraint.ConstraintLayout;
-import android.support.design.widget.BaseTransientBottomBar;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.transition.TransitionManager;
 import android.view.View;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.transition.TransitionManager;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.BaseTransientBottomBar;
+import com.google.android.material.snackbar.Snackbar;
 import com.mapbox.android.core.location.LocationEngine;
 import com.mapbox.android.core.location.LocationEngineCallback;
 import com.mapbox.android.core.location.LocationEngineProvider;
@@ -175,31 +176,8 @@ public class ComponentNavigationActivity extends HistoryActivity implements OnMa
 
   @OnClick(R.id.startNavigationFab)
   public void onStartNavigationClick(FloatingActionButton floatingActionButton) {
-    // Transition to navigation state
-    mapState = MapState.NAVIGATION;
-
     floatingActionButton.hide();
-    cancelNavigationFab.show();
-
-    // Show the InstructionView
-    TransitionManager.beginDelayedTransition(navigationLayout);
-    instructionView.setVisibility(View.VISIBLE);
-
-    // Start navigation
-    adjustMapPaddingForNavigation();
-    navigation.startNavigation(route);
-    addEventToHistoryFile("start_navigation");
-
-    // Location updates will be received from ProgressChangeListener
-    removeLocationEngineListener();
-
-    // TODO remove example usage
-    navigationMap.resetCameraPositionWith(NavigationCamera.NAVIGATION_TRACKING_MODE_GPS);
-    CameraUpdate cameraUpdate = cameraOverheadUpdate();
-    if (cameraUpdate != null) {
-      NavigationCameraUpdate navUpdate = new NavigationCameraUpdate(cameraUpdate);
-      navigationMap.retrieveCamera().update(navUpdate);
-    }
+    quickStartNavigation();
   }
 
   @OnClick(R.id.cancelNavigationFab)
@@ -469,6 +447,38 @@ public class ComponentNavigationActivity extends HistoryActivity implements OnMa
           Timber.e(throwable);
         }
       });
+  }
+
+  private void quickStartNavigation() {
+    // Transition to navigation state
+    mapState = MapState.NAVIGATION;
+
+    cancelNavigationFab.show();
+
+    // Show the InstructionView
+    TransitionManager.beginDelayedTransition(navigationLayout);
+    instructionView.setVisibility(View.VISIBLE);
+
+    adjustMapPaddingForNavigation();
+    // Updates camera with last location before starting navigating,
+    // making sure the route information is updated
+    // by the time the initial camera tracking animation is fired off
+    // Alternatively, NavigationMapboxMap#startCamera could be used here,
+    // centering the map camera to the beginning of the provided route
+    navigationMap.resumeCamera(lastLocation);
+    navigation.startNavigation(route);
+    addEventToHistoryFile("start_navigation");
+
+    // Location updates will be received from ProgressChangeListener
+    removeLocationEngineListener();
+
+    // TODO remove example usage
+    navigationMap.resetCameraPositionWith(NavigationCamera.NAVIGATION_TRACKING_MODE_GPS);
+    CameraUpdate cameraUpdate = cameraOverheadUpdate();
+    if (cameraUpdate != null) {
+      NavigationCameraUpdate navUpdate = new NavigationCameraUpdate(cameraUpdate);
+      navigationMap.retrieveCamera().update(navUpdate);
+    }
   }
 
   private void handleRoute(Response<DirectionsResponse> response, boolean isOffRoute) {

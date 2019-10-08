@@ -1,10 +1,11 @@
 package com.mapbox.services.android.navigation.v5.navigation;
 
 import android.content.Context;
-import android.support.annotation.FloatRange;
-import android.support.annotation.IntRange;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+
+import androidx.annotation.FloatRange;
+import androidx.annotation.IntRange;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.mapbox.api.directions.v5.DirectionsCriteria;
 import com.mapbox.api.directions.v5.DirectionsCriteria.AnnotationCriteria;
@@ -19,7 +20,11 @@ import com.mapbox.api.directions.v5.models.RouteOptions;
 import com.mapbox.core.exceptions.ServicesException;
 import com.mapbox.core.utils.TextUtils;
 import com.mapbox.geojson.Point;
+import com.mapbox.services.android.navigation.v5.internal.navigation.NavigationRouteCallback;
+import com.mapbox.services.android.navigation.v5.internal.navigation.NavigationRouteEventListener;
 import com.mapbox.services.android.navigation.v5.utils.LocaleUtils;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +89,7 @@ public final class NavigationRoute {
    * @param callback a RetroFit callback which contains an onResponse and onFailure
    * @since 0.5.0
    */
-  public void getRoute(final Callback<DirectionsResponse> callback) {
+  public void getRoute(@NotNull final Callback<DirectionsResponse> callback) {
     mapboxDirections.enqueueCall(new NavigationRouteCallback(EVENT_LISTENER, callback));
   }
 

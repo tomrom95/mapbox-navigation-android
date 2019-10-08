@@ -2,7 +2,8 @@ package com.mapbox.services.android.navigation.v5.utils;
 
 import android.content.Context;
 import android.os.Build;
-import android.support.annotation.NonNull;
+
+import androidx.annotation.NonNull;
 
 import com.mapbox.api.directions.v5.DirectionsCriteria;
 
@@ -35,6 +36,7 @@ public class LocaleUtils {
    * @param context to check configuration
    * @return language of device
    */
+  @NonNull
   public String inferDeviceLanguage(Context context) {
     return inferDeviceLocale(context).getLanguage();
   }
@@ -45,6 +47,7 @@ public class LocaleUtils {
    * @param context to check configuration
    * @return locale of device
    */
+  @NonNull
   public Locale inferDeviceLocale(Context context) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
       return context.getResources().getConfiguration().getLocales().get(0);

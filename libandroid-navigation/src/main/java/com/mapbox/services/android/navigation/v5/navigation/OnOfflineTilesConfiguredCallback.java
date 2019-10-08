@@ -1,18 +1,18 @@
 package com.mapbox.services.android.navigation.v5.navigation;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * Listener that needs to be added to
- * {@link MapboxOfflineRouter#configure(String, OnOfflineTilesConfiguredCallback)} to know when
+ * <tt>MapboxOfflineRouter#configure(String, OnOfflineTilesConfiguredCallback)</tt> to know when
  * offline data is initialized and
- * {@link MapboxOfflineRouter#findRoute(OfflineRoute, OnOfflineRouteFoundCallback)} could be called.
+ * <tt>MapboxOfflineRouter#findRoute(OfflineRoute, OnOfflineRouteFoundCallback)</tt> could be called.
  */
 public interface OnOfflineTilesConfiguredCallback {
 
   /**
    * Called whe the offline data is initialized and
-   * {@link MapboxOfflineRouter#findRoute(OfflineRoute, OnOfflineRouteFoundCallback)}.
+   * <tt>MapboxOfflineRouter#findRoute(OfflineRoute, OnOfflineRouteFoundCallback)</tt>.
    * could be called safely.
    *
    * @param numberOfTiles initialized in the path provided

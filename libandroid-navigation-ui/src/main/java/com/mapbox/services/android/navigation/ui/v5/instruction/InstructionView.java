@@ -1,22 +1,9 @@
 package com.mapbox.services.android.navigation.ui.v5.instruction;
 
-import android.arch.lifecycle.LifecycleOwner;
-import android.arch.lifecycle.Observer;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.constraint.ConstraintLayout;
-import android.support.constraint.ConstraintSet;
-import android.support.transition.AutoTransition;
-import android.support.transition.TransitionManager;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
@@ -26,6 +13,23 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.OnLifecycleEvent;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.transition.AutoTransition;
+import androidx.transition.TransitionManager;
 
 import com.mapbox.api.directions.v5.models.BannerComponents;
 import com.mapbox.api.directions.v5.models.BannerInstructions;
@@ -44,10 +48,10 @@ import com.mapbox.services.android.navigation.ui.v5.instruction.maneuver.Maneuve
 import com.mapbox.services.android.navigation.ui.v5.instruction.turnlane.TurnLaneAdapter;
 import com.mapbox.services.android.navigation.ui.v5.listeners.InstructionListListener;
 import com.mapbox.services.android.navigation.ui.v5.summary.list.InstructionListAdapter;
+import com.mapbox.services.android.navigation.v5.internal.navigation.metrics.FeedbackEvent;
 import com.mapbox.services.android.navigation.v5.milestone.BannerInstructionMilestone;
 import com.mapbox.services.android.navigation.v5.milestone.Milestone;
 import com.mapbox.services.android.navigation.v5.navigation.NavigationConstants;
-import com.mapbox.services.android.navigation.v5.navigation.metrics.FeedbackEvent;
 import com.mapbox.services.android.navigation.v5.offroute.OffRouteListener;
 import com.mapbox.services.android.navigation.v5.routeprogress.ProgressChangeListener;
 import com.mapbox.services.android.navigation.v5.routeprogress.RouteProgress;
@@ -71,7 +75,7 @@ import timber.log.Timber;
  *
  * @since 0.6.0
  */
-public class InstructionView extends RelativeLayout implements FeedbackBottomSheetListener {
+public class InstructionView extends RelativeLayout implements LifecycleObserver, FeedbackBottomSheetListener {
 
   private static final String COMPONENT_TYPE_LANE = "lane";
 
@@ -102,6 +106,7 @@ public class InstructionView extends RelativeLayout implements FeedbackBottomShe
   private boolean isRerouting;
   private SoundButton soundButton;
   private FeedbackButton feedbackButton;
+  private LifecycleOwner lifecycleOwner;
 
   public InstructionView(Context context) {
     this(context, null);
@@ -169,17 +174,19 @@ public class InstructionView extends RelativeLayout implements FeedbackBottomShe
 
   /**
    * Subscribes to a {@link NavigationViewModel} for
-   * updates from {@link android.arch.lifecycle.LiveData}.
+   * updates from {@link androidx.lifecycle.LiveData}.
    * <p>
    * Updates all views with fresh data / shows &amp; hides re-route state.
    *
    * @param navigationViewModel to which this View is subscribing
    * @since 0.6.2
    */
-  public void subscribe(NavigationViewModel navigationViewModel) {
+  public void subscribe(LifecycleOwner owner, NavigationViewModel navigationViewModel) {
+    lifecycleOwner = owner;
+    lifecycleOwner.getLifecycle().addObserver(this);
     this.navigationViewModel = navigationViewModel;
-    LifecycleOwner owner = (LifecycleOwner) getContext();
-    navigationViewModel.instructionModel.observe(owner, new Observer<InstructionModel>() {
+
+    navigationViewModel.instructionModel.observe(lifecycleOwner, new Observer<InstructionModel>() {
       @Override
       public void onChanged(@Nullable InstructionModel model) {
         if (model != null) {
@@ -187,7 +194,7 @@ public class InstructionView extends RelativeLayout implements FeedbackBottomShe
         }
       }
     });
-    navigationViewModel.bannerInstructionModel.observe(owner, new Observer<BannerInstructionModel>() {
+    navigationViewModel.bannerInstructionModel.observe(lifecycleOwner, new Observer<BannerInstructionModel>() {
       @Override
       public void onChanged(@Nullable BannerInstructionModel model) {
         if (model != null) {
@@ -198,7 +205,7 @@ public class InstructionView extends RelativeLayout implements FeedbackBottomShe
         }
       }
     });
-    navigationViewModel.isOffRoute.observe(owner, new Observer<Boolean>() {
+    navigationViewModel.isOffRoute.observe(lifecycleOwner, new Observer<Boolean>() {
       @Override
       public void onChanged(@Nullable Boolean isOffRoute) {
         if (isOffRoute != null) {
@@ -215,6 +222,20 @@ public class InstructionView extends RelativeLayout implements FeedbackBottomShe
     subscribeAlertView();
     initializeButtonListeners();
     showButtons();
+  }
+
+  /**
+   * Unsubscribes {@link NavigationViewModel} {@link androidx.lifecycle.LiveData} objects
+   * previously added in {@link InstructionView#subscribe(NavigationViewModel)}
+   * by removing the observers of the {@link LifecycleOwner} when parent view is destroyed
+   */
+  @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+  public void unsubscribe() {
+    if (navigationViewModel != null) {
+      navigationViewModel.instructionModel.removeObservers(lifecycleOwner);
+      navigationViewModel.bannerInstructionModel.removeObservers(lifecycleOwner);
+      navigationViewModel.isOffRoute.removeObservers(lifecycleOwner);
+    }
   }
 
   /**
